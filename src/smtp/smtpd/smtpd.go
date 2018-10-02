@@ -47,7 +47,9 @@ func Init(domain string, ip string) *Smtpd {
 
 // 问候语
 func (this *Smtpd) Hola() string {
-    return fmt.Sprintf("220 %s %s Server (%s %s Server %s) ready %d\r\n", this.Domain, this.Type, this.Name, this.Type, this.Version, time.Now().Unix())
+    return fmt.Sprintf("220 %s %s Server (%s %s Server %s) ready %d\r\n",
+        this.Domain, this.Type, this.Name, this.Type, this.Version, time.Now().Unix(),
+    )
 }
 
 // helo命令

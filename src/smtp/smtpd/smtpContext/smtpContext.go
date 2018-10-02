@@ -34,6 +34,7 @@ const (
 func InitSmtpContext(sock net.Conn) *SmtpContext {
     ret := &SmtpContext{}
 
+    ret.SentStream = tcpServer.InitSentStream(sock)
     ret.MailContent = ""
     ret.Module = MOD_COMMAND
     ret.Login = false
