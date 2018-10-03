@@ -10,7 +10,7 @@ import (
     "regexp"
     "strings"
     "time"
-    "smtp/smtpd/smtpContext"
+    "mailp/smtpd/smtpContext"
 )
 /*
 const (

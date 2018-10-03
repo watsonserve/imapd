@@ -14,15 +14,14 @@ type KV struct {
 type SmtpContext struct {
     tcpServer.SentStream
     Module int
-    Address string
-    Msg string
     MailContent string
     Login bool
+
+    Msg string
     User string
     Sender string
     Recver list.List
     Head []KV
-    Sock net.Conn
 }
 
 const (
@@ -35,10 +34,8 @@ func InitSmtpContext(sock net.Conn) *SmtpContext {
     ret := &SmtpContext{}
 
     ret.SentStream = tcpServer.InitSentStream(sock)
-    ret.MailContent = ""
     ret.Module = MOD_COMMAND
+    ret.MailContent = ""
     ret.Login = false
-    ret.Address = sock.RemoteAddr().String()
-    ret.Sock = sock
     return ret
 }
