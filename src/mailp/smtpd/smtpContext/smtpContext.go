@@ -1,6 +1,7 @@
 package smtpContext
 
 import (
+    "fmt"
     "net"
     "container/list"
     "tcpServer"
@@ -33,9 +34,14 @@ const (
 func InitSmtpContext(sock net.Conn) *SmtpContext {
     ret := &SmtpContext{}
 
-    ret.SentStream = tcpServer.InitSentStream(sock)
+    ret.SentStream = *tcpServer.InitSentStream(sock)
     ret.Module = MOD_COMMAND
     ret.MailContent = ""
     ret.Login = false
     return ret
+}
+
+func (this *SmtpContext) TakeOff() {
+    fmt.Println(this.Head)
+    fmt.Println(this.MailContent)
 }

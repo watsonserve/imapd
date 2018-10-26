@@ -1,8 +1,10 @@
 package smtpd
 
 import (
+    "auth"
     "bufio"
     "encoding/base64"
+    "errors"
     "fmt"
     "net"
     "os"
@@ -17,13 +19,6 @@ const (
     BUFSIZ = 8192
 )
 */
-
-type Database struct {
-}
-
-func (this *Database) Auth(username string, password string) string {
-    return ""
-}
 
 type Smtpd struct {
     Domain string
@@ -53,31 +48,27 @@ func (this *Smtpd) Hola() string {
 }
 
 // helo命令
-func (this *Smtpd) HELO(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) HELO(client *smtpContext.SmtpContext) {
     client.Module = smtpContext.MOD_COMMAND
     addr := client.Address
     name := client.Msg[5:]
     client.Send("250 " + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n")
-    return false
 }
 
 // ehlo命令
-func (this *Smtpd) EHLO(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) EHLO(client *smtpContext.SmtpContext) {
     client.Module = smtpContext.MOD_COMMAND
     addr := client.Address
     name := client.Msg[5:]
     client.Send("250-" + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN PLAIN\r\n250-PIPELINING\r\n250 ENHANCEDSTATUSCODES\r\n")
-    return false
 }
 
 // 授权
-func (this *Smtpd) AUTH(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) AUTH(client *smtpContext.SmtpContext) {
     content, err := base64.StdEncoding.DecodeString(client.Msg[11:])
-    if nil == err {
-        // debug
-        fmt.Println("smtp.go 75: " + string(content))
-        //fmt.Fprintln(os.Stderr, "error:" + err)
-        return false
+    if nil != err {
+        fmt.Fprintln(os.Stderr, "error: " + err.Error())
+        return
     }
 
     for i := 0; i < len(content); i++ {
@@ -85,87 +76,79 @@ func (this *Smtpd) AUTH(client *smtpContext.SmtpContext) bool {
             content[i] = '\n'
         }
     }
-    db := &Database{}
+    author := auth.New()
     userPassword := strings.Split(string(content), "\n")
-    userId := db.Auth(userPassword[0], userPassword[1])
-    buf := "535 Authentication Failed"
+    userId := author.Auth(userPassword[0], userPassword[1])
+    buf := "535 Authentication Failed\r\n"
     if "" != userId {
         client.User = userPassword[0]
-        buf = "235 Authentication Successful"
+        buf = "235 Authentication Successful\r\n"
         client.Login = true
         fmt.Println("auth by self")
     }
     client.Send(buf)
-    return false
 }
 
 // 
-func (this *Smtpd) QUIT(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) QUIT(client *smtpContext.SmtpContext) {
     client.End("221 2.0.0 " + this.Domain + " Service closing transmission channel\r\n")
-    fmt.Println(client.Head)
-    fmt.Println(client.MailContent)
-    return false
 }
 
 // 
-func (this *Smtpd) XCLIENT(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) XCLIENT(client *smtpContext.SmtpContext) {
     fmt.Println("auth by agency")
     client.Login = true
     client.Send(this.Hola())
-    return false
 }
 
 // 
-func (this *Smtpd) STARTTLS(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) STARTTLS(client *smtpContext.SmtpContext) {
     client.Send("502 5.3.3 STARTTLS is not supported\r\n")
-    return false
+    fmt.Println("startTTS")
 }
 
 // 
-func (this *Smtpd) HELP(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) HELP(client *smtpContext.SmtpContext) {
     client.Send("502 5.3.3 HELP is not supported\r\n")
-    return false
 }
 
 // 
-func (this *Smtpd) NOOP(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) NOOP(client *smtpContext.SmtpContext) {
     client.Send("250 2.0.0 OK\r\n")
-    return false
+    fmt.Println("noop")
 }
 
 // 
-func (this *Smtpd) RSET(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) RSET(client *smtpContext.SmtpContext) {
     client.Send("250 2.0.0 OK\r\n")
-    return false
+    fmt.Println("rset")
 }
 
 // 
-func (this *Smtpd) MAIL(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) MAIL(client *smtpContext.SmtpContext) {
     client.Sender = this.re.FindStringSubmatch(client.Msg)[1]
     clientDomain := strings.Split(client.Sender, "@")[1]
     if (clientDomain == this.Domain) != (!client.Login) { // 本域已登录 or 外域未登录
         client.Send("250 2.1.0 Sender <" + client.Sender + "> OK\r\n")
-        return false
+        return
     }
     client.Send("530 5.7.1 Authentication Required\r\n")
-    return false
 }
 
 // 
-func (this *Smtpd) RCPT(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) RCPT(client *smtpContext.SmtpContext) {
     recver := this.re.FindStringSubmatch(client.Msg)[1]
     if strings.Split(recver, "@")[1] != this.Domain && !client.Login { // 非登录用户 to 外域
         client.Send("530 5.7.1 Authentication Required\r\n")
-        return false
+        return
     }
     //fmt.Println(strings.Split(recver, "@")[1] + " ", !client.Login)
     client.Recver.PushBack(recver)
     client.Send("250 2.1.5 Recipient <" + recver + "> OK\r\n")
-    return false
 }
 
 // 
-func (this *Smtpd) DATA(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) DATA(client *smtpContext.SmtpContext) {
     format := "from %s ([%s]) by %s over TLS secured channel with %s(%s)\r\n\t%d"
     client.Module = smtpContext.MOD_HEAD
     ele := &smtpContext.KV {
@@ -175,7 +158,6 @@ func (this *Smtpd) DATA(client *smtpContext.SmtpContext) bool {
     client.Head = append(client.Head, *ele)
 
     client.Send("354 Ok Send data ending with <CRLF>.<CRLF>\r\n")
-    return false
 }
 
 func (this *Smtpd) DataHead(client *smtpContext.SmtpContext) {
@@ -197,6 +179,7 @@ func (this *Smtpd) DataBody(client *smtpContext.SmtpContext) {
     if "." == client.Msg {
         client.Module = smtpContext.MOD_COMMAND
         client.Send("250 2.6.0 Message received\r\n")
+        client.TakeOff()
         fmt.Println("250 2.6.0 Message received")
         return
     }
@@ -204,25 +187,24 @@ func (this *Smtpd) DataBody(client *smtpContext.SmtpContext) {
 }
 
 
-func (this *Smtpd) CommandHash(client *smtpContext.SmtpContext) bool {
+func (this *Smtpd) CommandHash(client *smtpContext.SmtpContext) error {
     var key string
     // 截取第一个单词
     _, err := fmt.Sscanf(client.Msg, "%s", &key)
     if nil != err {
-        fmt.Fprintln(os.Stderr, err)
-        return true
+        return err
     }
     // 查找处理方法
     that := reflect.ValueOf(this)
     method := that.MethodByName(key)
     if !method.IsValid() {
-        fmt.Fprintln(os.Stderr, "method " + key + "not valid")
-        return true
+        return errors.New("method " + key + " not valid")
     }
     // 执行处理
     clientValue := reflect.ValueOf(client)
     inArgs := []reflect.Value{clientValue}
-    return method.Call(inArgs)[0].Bool()
+    method.Call(inArgs)
+    return nil
 }
 
 func (this *Smtpd) Task(conn net.Conn) {
@@ -243,7 +225,9 @@ func (this *Smtpd) Task(conn net.Conn) {
         fmt.Println(client.Msg)
         switch client.Module {
             case smtpContext.MOD_COMMAND:
-                if this.CommandHash(client) {
+                err = this.CommandHash(client)
+                if nil != err {
+                    fmt.Fprintln(os.Stderr, err)
                 }
             case smtpContext.MOD_HEAD:
                 this.DataHead(client)

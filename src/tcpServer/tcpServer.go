@@ -24,17 +24,23 @@ func (this *TcpServer) SetDispatcher(disp dispatcher.Dispatcher) {
     this.disp = disp
 }
 
+/*
+ * 这里使用的是每个链接启动一个新的go程的模型
+ * 高并发的话，性能取决于go语言的协程能力
+ */
 func (this *TcpServer) Listen(port string) int {
     // port = ":465"
     ln, err := net.Listen("tcp", port)
     if err != nil {
         return -1
     }
+    defer ln.Close()
     for {
         conn, err := ln.Accept()
         if err != nil {
             log.Println("a connect exception")
         }
+        defer conn.Close()
         go this.disp.Task(conn)
     }
 }
