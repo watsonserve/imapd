@@ -10,6 +10,7 @@ import (
     "regexp"
     "strings"
     "time"
+    "mailp/imapd/imapContext"
 )
 /*
 const (
@@ -50,8 +51,8 @@ func (this *Imapd) Hola() string {
 }
 
 // helo命令
-func (this *Imapd) HELO(client *smtpContext.SmtpContext) bool {
-    client.Module = smtpContext.MOD_COMMAND
+func (this *Imapd) HELO(client *imapContext.ImapContext) bool {
+    client.Module = imapContext.MOD_COMMAND
     addr := client.Address
     name := client.Msg[5:]
     client.Send("250 " + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n")
@@ -59,8 +60,8 @@ func (this *Imapd) HELO(client *smtpContext.SmtpContext) bool {
 }
 
 // ehlo命令
-func (this *Imapd) EHLO(client *smtpContext.SmtpContext) bool {
-    client.Module = smtpContext.MOD_COMMAND
+func (this *Imapd) EHLO(client *imapContext.ImapContext) bool {
+    client.Module = imapContext.MOD_COMMAND
     addr := client.Address
     name := client.Msg[5:]
     client.Send("250-" + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN PLAIN\r\n250-PIPELINING\r\n250 ENHANCEDSTATUSCODES\r\n")
@@ -68,7 +69,7 @@ func (this *Imapd) EHLO(client *smtpContext.SmtpContext) bool {
 }
 
 // 授权
-func (this *Imapd) AUTH(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) AUTH(client *imapContext.ImapContext) bool {
     content, err := base64.StdEncoding.DecodeString(client.Msg[11:])
     if nil == err {
         // debug
@@ -97,7 +98,7 @@ func (this *Imapd) AUTH(client *smtpContext.SmtpContext) bool {
 }
 
 // 
-func (this *Imapd) QUIT(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) QUIT(client *imapContext.ImapContext) bool {
     client.End("221 2.0.0 " + this.Domain + " Service closing transmission channel\r\n")
     fmt.Println(client.Head)
     fmt.Println(client.MailContent)
@@ -105,7 +106,7 @@ func (this *Imapd) QUIT(client *smtpContext.SmtpContext) bool {
 }
 
 // 
-func (this *Imapd) XCLIENT(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) XCLIENT(client *imapContext.ImapContext) bool {
     fmt.Println("auth by agency")
     client.Login = true
     client.Send(this.Hola())
@@ -113,31 +114,31 @@ func (this *Imapd) XCLIENT(client *smtpContext.SmtpContext) bool {
 }
 
 // 
-func (this *Imapd) STARTTLS(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) STARTTLS(client *imapContext.ImapContext) bool {
     client.Send("502 5.3.3 STARTTLS is not supported\r\n")
     return false
 }
 
 // 
-func (this *Imapd) HELP(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) HELP(client *imapContext.ImapContext) bool {
     client.Send("502 5.3.3 HELP is not supported\r\n")
     return false
 }
 
 // 
-func (this *Imapd) NOOP(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) NOOP(client *imapContext.ImapContext) bool {
     client.Send("250 2.0.0 OK\r\n")
     return false
 }
 
 // 
-func (this *Imapd) RSET(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) RSET(client *imapContext.ImapContext) bool {
     client.Send("250 2.0.0 OK\r\n")
     return false
 }
 
 // 
-func (this *Imapd) MAIL(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) MAIL(client *imapContext.ImapContext) bool {
     client.Sender = this.re.FindStringSubmatch(client.Msg)[1]
     clientDomain := strings.Split(client.Sender, "@")[1]
     if (clientDomain == this.Domain) != (!client.Login) { // 本域已登录 or 外域未登录
@@ -149,7 +150,7 @@ func (this *Imapd) MAIL(client *smtpContext.SmtpContext) bool {
 }
 
 // 
-func (this *Imapd) RCPT(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) RCPT(client *imapContext.ImapContext) bool {
     recver := this.re.FindStringSubmatch(client.Msg)[1]
     if strings.Split(recver, "@")[1] != this.Domain && !client.Login { // 非登录用户 to 外域
         client.Send("530 5.7.1 Authentication Required\r\n")
@@ -162,10 +163,10 @@ func (this *Imapd) RCPT(client *smtpContext.SmtpContext) bool {
 }
 
 // 
-func (this *Imapd) DATA(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) DATA(client *imapContext.ImapContext) bool {
     format := "from %s ([%s]) by %s over TLS secured channel with %s(%s)\r\n\t%d"
-    client.Module = smtpContext.MOD_HEAD
-    ele := &smtpContext.KV {
+    client.Module = imapContext.MOD_HEAD
+    ele := &imapContext.KV {
         Name: "Received",
         Value: fmt.Sprintf(format, this.Domain, this.Ip, this.Domain, this.Name, this.Version, time.Now().Unix()),
     }
@@ -175,14 +176,14 @@ func (this *Imapd) DATA(client *smtpContext.SmtpContext) bool {
     return false
 }
 
-func (this *Imapd) DataHead(client *smtpContext.SmtpContext) {
+func (this *Imapd) DataHead(client *imapContext.ImapContext) {
     if "" == client.Msg {
-        client.Module = smtpContext.MOD_BODY
+        client.Module = imapContext.MOD_BODY
     } else if ' ' == client.Msg[0] || '\t' == client.Msg[0] {
         client.Head[len(client.Head) - 1].Value += "\r\n" + client.Msg
     } else {
         attr := strings.Split(client.Msg, ": ")
-        ele := &smtpContext.KV {
+        ele := &imapContext.KV {
             Name: attr[0],
             Value: attr[1],
         }
@@ -190,9 +191,9 @@ func (this *Imapd) DataHead(client *smtpContext.SmtpContext) {
     }
 }
 
-func (this *Imapd) DataBody(client *smtpContext.SmtpContext) {
+func (this *Imapd) DataBody(client *imapContext.ImapContext) {
     if "." == client.Msg {
-        client.Module = smtpContext.MOD_COMMAND
+        client.Module = imapContext.MOD_COMMAND
         client.Send("250 2.6.0 Message received\r\n")
         fmt.Println("250 2.6.0 Message received")
         return
@@ -201,7 +202,7 @@ func (this *Imapd) DataBody(client *smtpContext.SmtpContext) {
 }
 
 
-func (this *Imapd) CommandHash(client *smtpContext.SmtpContext) bool {
+func (this *Imapd) CommandHash(client *imapContext.ImapContext) bool {
     var key string
     // 截取第一个单词
     _, err := fmt.Sscanf(client.Msg, "%s", &key)
@@ -224,7 +225,7 @@ func (this *Imapd) CommandHash(client *smtpContext.SmtpContext) bool {
 
 func (this *Imapd) Task(conn net.Conn) {
     scanner := bufio.NewScanner(conn)
-    client := smtpContext.InitSmtpContext(conn)
+    client := imapContext.InitImapContext(conn)
     client.Send(this.Hola())
 
     for scanner.Scan() {
@@ -239,12 +240,12 @@ func (this *Imapd) Task(conn net.Conn) {
         //}
         fmt.Println(client.Msg)
         switch client.Module {
-            case smtpContext.MOD_COMMAND:
+            case imapContext.MOD_COMMAND:
                 if this.CommandHash(client) {
                 }
-            case smtpContext.MOD_HEAD:
+            case imapContext.MOD_HEAD:
                 this.DataHead(client)
-            case smtpContext.MOD_BODY:
+            case imapContext.MOD_BODY:
                 this.DataBody(client)
         }
     }
