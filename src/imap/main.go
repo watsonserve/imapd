@@ -21,7 +21,7 @@ func main() {
     log.SetOutput(io.Writer(fp))
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
-    dispatcher := imapd.Init("watsonserve.com", "127.0.0.1")
+    dispatcher := imapd.Init("imap.watsonserve.com", "127.0.0.1")
     server := tcpServer.Init()
     server.SetDispatcher(dispatcher)
 
