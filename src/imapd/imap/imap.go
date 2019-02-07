@@ -1,11 +1,11 @@
-package imapd
+package imap
 
 import (
 	"bufio"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"mailp/imapd/imapContext"
+	"imapd/imap/imapContext"
 	"net"
 	"os"
 	"reflect"
@@ -66,32 +66,6 @@ func (this *Imapd) EHLO(client *imapContext.ImapContext) {
 	addr := client.Address
 	name := client.Msg[5:]
 	client.Send("250-" + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN PLAIN\r\n250-PIPELINING\r\n250 ENHANCEDSTATUSCODES\r\n")
-}
-
-// 授权
-func (this *Smtpd) AUTH(client *smtpContext.SmtpContext) {
-	content, err := base64.StdEncoding.DecodeString(client.Msg[11:])
-	if nil != err {
-		fmt.Fprintln(os.Stderr, "error: "+err.Error())
-		return
-	}
-
-	for i := 0; i < len(content); i++ {
-		if 0 == content[i] {
-			content[i] = '\n'
-		}
-	}
-	author := auth.New()
-	userPassword := strings.Split(string(content), "\n")
-	userId := author.Auth(userPassword[0], userPassword[1])
-	buf := "535 Authentication Failed\r\n"
-	if "" != userId {
-		client.User = userPassword[0]
-		buf = "235 Authentication Successful\r\n"
-		client.Login = true
-		fmt.Println("auth by self")
-	}
-	client.Send(buf)
 }
 
 //
@@ -178,6 +152,7 @@ func (this *Imapd) Task(conn net.Conn) {
 		//if "QUIT" == client.Msg {
 		//}
 		fmt.Println(client.Msg)
+		Lexical(client.Msg)
 		switch client.Module {
 		case imapContext.MOD_COMMAND:
 			err = this.CommandHash(client)

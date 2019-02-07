@@ -4,7 +4,7 @@ import (
     "fmt"
     "net"
     "container/list"
-    "tcpServer"
+    "server"
 )
 
 type KV struct {
@@ -13,7 +13,7 @@ type KV struct {
 }
 
 type ImapContext struct {
-    tcpServer.SentStream
+    server.SentStream
     Module int
     MailContent string
     Login bool
@@ -34,7 +34,7 @@ const (
 func InitImapContext(sock net.Conn) *ImapContext {
     ret := &ImapContext{}
 
-    ret.SentStream = *tcpServer.InitSentStream(sock)
+    ret.SentStream = *server.InitSentStream(sock)
     ret.Module = MOD_COMMAND
     ret.MailContent = ""
     ret.Login = false

@@ -1,14 +1,17 @@
-package tcpServer
+package server
 
 import (
     "fmt"
     "net"
     "log"
-    "dispatcher"
 )
 
+type Dispatcher interface {
+    Task(conn net.Conn)
+}
+
 type TcpServer struct {
-    disp dispatcher.Dispatcher
+    disp Dispatcher
 }
 
 type SentStream struct {
@@ -16,11 +19,11 @@ type SentStream struct {
     Sock net.Conn
 }
 
-func Init() *TcpServer {
+func InitTCPServer() *TcpServer {
     return &TcpServer{}
 }
 
-func (this *TcpServer) SetDispatcher(disp dispatcher.Dispatcher) {
+func (this *TcpServer) SetDispatcher(disp Dispatcher) {
     this.disp = disp
 }
 
@@ -44,6 +47,7 @@ func (this *TcpServer) Listen(port string) int {
         go this.disp.Task(conn)
     }
 }
+
 
 func InitSentStream(sock net.Conn) *SentStream {
     ret := &SentStream {}

@@ -4,9 +4,9 @@ import (
     "os"
     "io"
     "log"
-    "mailp/smtpd"
-    "tcpServer"
     "fmt"
+    "smtpd/smtp"
+    "server"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
     dispatcher := smtpd.Init("watsonserve.com", "127.0.0.1")
-    server := tcpServer.Init()
+    server := server.InitTCPServer()
     server.SetDispatcher(dispatcher)
 
     fmt.Println("listen on port 10025")

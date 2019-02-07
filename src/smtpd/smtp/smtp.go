@@ -1,4 +1,4 @@
-package smtpd
+package smtp
 
 import (
 	"auth"
@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"mailp/smtpd/smtpContext"
+	"smtpd/smtp/smtpContext"
 	"net"
 	"os"
 	"reflect"
