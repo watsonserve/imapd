@@ -2,7 +2,7 @@
 *.o
 *.a
 *.so
-
+bin
 .DS_Store
 # Folders
 _obj

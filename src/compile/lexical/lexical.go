@@ -5,9 +5,6 @@ package lexical
 #include "lexical.h"
 */
 import "C"
-import (
-    "container/list"
-)
 
 const (
     CONST_STRING = 1
@@ -50,9 +47,9 @@ func getType(ch byte) int {
  * @ 词法分析
  * @return 成功 0，失败 -1
  */
-func Parse(str string) *list.List {
+func Parse(str string) []Lexical_t {
     var val Lexical_t
-    dest := list.New()
+    dest := make([]Lexical_t, 0)
     count := 0
     length := len(str)
     val.Value = ""
@@ -97,7 +94,7 @@ func Parse(str string) *list.List {
 
         val.Cnt = count
         count++
-        dest.PushBack(val)
+        dest = append(dest, val)
     }
 
     return dest

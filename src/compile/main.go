@@ -7,8 +7,8 @@ import (
 
 func main() {
     list := lexical.Parse("\"foo\\\"bar\"")
-    for item := list.Front(); item != nil; item = item.Next() {
-        el := item.Value.(lexical.Lexical_t)
+    for i := 0; i < len(list); i++ {
+        el := list[i]
         fmt.Printf("%d %d %s|\n", el.Cnt, el.Type, el.Value)
     }
 }
