@@ -52,7 +52,8 @@ func (this *Smtpd) HELO(client *SmtpContext) {
 	client.Module = MOD_COMMAND
 	addr := client.Address
 	name := client.Msg[5:]
-	client.Send("250 " + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n")
+
+	client.Send(fmt.Sprintf("250 %s Hello %s (%s[%s])\r\n", this.Domain, name, addr, addr))
 }
 
 // ehlo命令
@@ -60,7 +61,15 @@ func (this *Smtpd) EHLO(client *SmtpContext) {
 	client.Module = MOD_COMMAND
 	addr := client.Address
 	name := client.Msg[5:]
-	client.Send("250-" + this.Domain + " Hello " + name + " (" + addr + "[" + addr + "])\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN PLAIN\r\n250-PIPELINING\r\n250 ENHANCEDSTATUSCODES\r\n")
+	msg := fmt.Sprintf(
+		"250-%s Hello %s (%s[%s])\r\n%s\r\n%s\r\n%s\r\n%s\r\n",
+		this.Domain, name, addr, addr,
+		"250-AUTH LOGIN PLAIN",
+		"250-AUTH=LOGIN PLAIN",
+		"250-PIPELINING",
+		"250 ENHANCEDSTATUSCODES",
+	)
+	client.Send(msg)
 }
 
 // 授权
