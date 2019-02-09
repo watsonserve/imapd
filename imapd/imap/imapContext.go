@@ -18,7 +18,7 @@ type ImapContext struct {
     MailContent string
     Login bool
 
-    Msg string
+    Script Mas
     User string
     Sender string
     Recver list.List
