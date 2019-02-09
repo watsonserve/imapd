@@ -1,10 +1,10 @@
-package smtpContext
+package smtp
 
 import (
     "fmt"
     "net"
     "container/list"
-    "server"
+    "github.com/watsonserve/maild/server"
 )
 
 type KV struct {
@@ -45,3 +45,4 @@ func (this *SmtpContext) TakeOff() {
     fmt.Println(this.Head)
     fmt.Println(this.MailContent)
 }
+

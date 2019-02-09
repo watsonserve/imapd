@@ -1,10 +1,10 @@
-package imapContext
+package imap
 
 import (
     "fmt"
     "net"
     "container/list"
-    "server"
+    "github.com/watsonserve/maild/server"
 )
 
 type KV struct {

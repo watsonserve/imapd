@@ -5,8 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"compile/lexical"
-	"imapd/imap/imapContext"
+	"github.com/watsonserve/maild/compile/lexical"
 	"net"
 	"os"
 	"reflect"
@@ -48,7 +47,7 @@ func Init(domain string, ip string) *Imapd {
 	return ret
 }
 
-func (this *Imapd) CommandHash(client *imapContext.ImapContext) error {
+func (this *Imapd) CommandHash(client *ImapContext) error {
 	var key string
 	// 截取第一个单词
 	_, err := fmt.Sscanf(client.Msg, "%d %s", &key)
@@ -70,7 +69,7 @@ func (this *Imapd) CommandHash(client *imapContext.ImapContext) error {
 
 func (this *Imapd) Task(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
-	client := imapContext.InitImapContext(conn)
+	client := InitImapContext(conn)
 	client.Send(this.Hola())
 
 	for scanner.Scan() {
@@ -84,16 +83,16 @@ func (this *Imapd) Task(conn net.Conn) {
 		//if "QUIT" == client.Msg {
 		//}
 		fmt.Println(client.Msg)
-		lexical.Parse(client.Msg)
+		command := lexical.Parse(client.Msg)
 		switch client.Module {
-		case imapContext.MOD_COMMAND:
+		case MOD_COMMAND:
 			err = this.CommandHash(client)
 			if nil != err {
 				fmt.Fprintln(os.Stderr, err)
 			}
-		case imapContext.MOD_HEAD:
+		case MOD_HEAD:
 			this.DataHead(client)
-		case imapContext.MOD_BODY:
+		case MOD_BODY:
 			this.DataBody(client)
 		}
 	}
