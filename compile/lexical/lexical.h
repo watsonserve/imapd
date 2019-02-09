@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-#define OPERATIONSIGNAL ",(){}[]+-*/%=&|~^!><;?:@#`\\\n"
+#define OPERATIONSIGNAL ",.(){}[]+-*/%=&|~^!><;?:@#`\\\n"
 
 const char * movPointer(const char *, const int);
 
