@@ -20,10 +20,6 @@ type Lexical_t struct {
 }
 
 func getType(ch byte) int {
-    // signal
-    if 1 == int(C.isOperationSignal(C.char(ch))) {
-        return OPERA
-    }
 
     // const string
     if '"' == ch || '\'' == ch {
@@ -62,9 +58,7 @@ func Parse(str string) []Lexical_t {
 
         val.Type = getType(str[i])
 
-        if OPERA == val.Type {
-            val.Value = string(str[i])
-        } else {
+        if 0 != val.Type {
             cstring := C.movPointer(cstr, C.int(i))
             limit := C.int(length - i)
             increment := 0
@@ -90,6 +84,16 @@ func Parse(str string) []Lexical_t {
             }
             val.Value = str[i:end]
             i += increment
+        } else {
+            // signal
+            head := str[i : i + 2]
+            operaLen := int(C.endOperationSignal(C.CString(head), 2))
+            if 0 < operaLen {
+                val.Type = OPERA
+                end := i + operaLen
+                val.Value = string(str[i:end])
+                i = end - 1
+            }
         }
 
         val.Cnt = count
@@ -99,4 +103,3 @@ func Parse(str string) []Lexical_t {
 
     return dest
 }
-

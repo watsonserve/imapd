@@ -3,9 +3,19 @@
 
 #include <string.h>
 
-#define OPERATIONSIGNAL ",.(){}[]+-*/%=&|~^!><;?:@#`\\\n"
+#ifndef OPERATIONSIGNAL_S
+#define OPERATIONSIGNAL_S ",.(){}[]+-*/%=!&|~^><:;?@#`\\\n"
+#endif
 
-const char * movPointer(const char *, const int);
+#ifndef OPERATIONSIGNAL_D
+
+#define OPERATIONSIGNAL_D                                                                                                                              \
+    {                                                                                                                                                  \
+        "+=", "-=", "*=", "/=", "%=", "==", "!=", "&=", "|=", "~=", "^=", ">=", "<=", ":=", "++", "--", "&&", "||", "=>", "->", "<>", "//", "/*", "*/" \
+    }
+#endif
+
+const char *movPointer(const char *, const int);
 
 int endNumberConst(const char *, int);
 
@@ -13,6 +23,6 @@ int endStringConst(const char, const char *, int);
 
 int endVariable(const char *, int);
 
-int isOperationSignal(char);
+int endOperationSignal(const char *, int);
 
 #endif
