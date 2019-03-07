@@ -11,20 +11,11 @@ type Dispatcher interface {
 }
 
 type TcpServer struct {
-    disp Dispatcher
-}
-
-type SentStream struct {
-    Address string
-    Sock net.Conn
+    Dispatcher
 }
 
 func InitTCPServer() *TcpServer {
     return &TcpServer{}
-}
-
-func (this *TcpServer) SetDispatcher(disp Dispatcher) {
-    this.disp = disp
 }
 
 /*
@@ -44,10 +35,15 @@ func (this *TcpServer) Listen(port string) int {
             log.Println("a connect exception")
         }
         defer conn.Close()
-        go this.disp.Task(conn)
+        go this.Task(conn)
     }
 }
 
+
+type SentStream struct {
+    Address string
+    Sock net.Conn
+}
 
 func InitSentStream(sock net.Conn) *SentStream {
     ret := &SentStream {}
