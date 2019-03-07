@@ -22,10 +22,8 @@ func main() {
     log.SetOutput(io.Writer(fp))
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
-    dispatcher := imap.Init("imap.watsonserve.com", "127.0.0.1")
-    server := server.InitTCPServer()
-    server.SetDispatcher(dispatcher)
+    imapd := imap.New("imap.watsonserve.com", "127.0.0.1")
 
     fmt.Println("listen on port 10143")
-    server.Listen(":10143")
+    imapd.Listen(":10143")
 }

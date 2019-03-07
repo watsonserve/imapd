@@ -12,6 +12,22 @@ type KV struct {
     Value string
 }
 
+type cap_t struct {
+    Ability    string
+    Permission bool
+}
+
+type Imapd struct {
+    Domain        string
+    Type          string
+    Name          string
+    Version       string
+    Ip            string
+    re            *regexp.Regexp
+    capability    []cap_t
+    outPermission map[string]bool
+}
+
 type ImapContext struct {
     server.SentStream
     Module int
