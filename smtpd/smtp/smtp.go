@@ -1,6 +1,7 @@
 package smtp
 
 import (
+	"github.com/watsonserve/maild"
 	"github.com/watsonserve/maild/auth"
 	"encoding/base64"
 	"fmt"
@@ -122,7 +123,7 @@ func RCPT(ctx *SmtpContext) {
 func DATA(ctx *SmtpContext) {
 	format := "from %s ([%s]) by %s over TLS secured channel with %s(%s)\r\n\t%d"
 	ctx.Module = MOD_HEAD
-	ele := &KV {
+	ele := &maild.KV {
 		Name:  "Received",
 		Value: fmt.Sprintf(format, ctx.Domain, ctx.Ip, ctx.Domain, ctx.Name, ctx.Version, time.Now().Unix()),
 	}

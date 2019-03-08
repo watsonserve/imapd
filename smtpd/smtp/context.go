@@ -3,39 +3,11 @@ package smtp
 import (
     "fmt"
     "net"
-    "container/list"
+    "github.com/watsonserve/maild"
     "github.com/watsonserve/maild/server"
     "regexp"
     "time"
 )
-
-type KV struct {
-    Name string
-    Value string
-}
-
-type Mail struct {
-    Sender string
-    Recver list.List
-    Head []KV
-    MailContent string
-}
-
-type SmtpdConfig struct {
-	Domain  string
-	Ip      string
-	Name    string
-	Type    string
-	Version string
-}
-
-func (this *SmtpdConfig) CloneFrom(ctx *SmtpdConfig) {
-	this.Domain = ctx.Domain
-	this.Ip = ctx.Ip
-	this.Name = ctx.Name
-	this.Type = ctx.Type
-	this.Version = ctx.Version
-}
 
 const (
     MOD_COMMAND = 1
@@ -45,13 +17,13 @@ const (
 
 type SmtpContext struct {
     server.SentStream
-    SmtpdConfig
+    maild.ServerConfig
     Module int
     Login  bool
 	re     *regexp.Regexp
     Msg    string
     User   string
-    Email  Mail
+    Email  maild.Mail
 }
 
 func InitSmtpContext(sock net.Conn) *SmtpContext {

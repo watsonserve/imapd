@@ -22,7 +22,7 @@ func InitTCPServer() *TcpServer {
  * 这里使用的是每个链接启动一个新的go程的模型
  * 高并发的话，性能取决于go语言的协程能力
  */
-func (this *TcpServer) Listen(port string) int {
+func (this *TcpServer) Listen(port string, that Dispatcher) int {
     // port = ":465"
     ln, err := net.Listen("tcp", port)
     if err != nil {
@@ -35,7 +35,7 @@ func (this *TcpServer) Listen(port string) int {
             log.Println("a connect exception")
         }
         defer conn.Close()
-        go this.Task(conn)
+        go that.Task(conn)
     }
 }
 

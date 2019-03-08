@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"fmt"
+    "github.com/watsonserve/maild"
 	"github.com/watsonserve/maild/server"
 	"net"
 	"bufio"
@@ -12,7 +13,7 @@ import (
 
 type Smtpd struct {
 	server.TcpServer
-	SmtpdConfig
+	maild.ServerConfig
 	dict    map[string]func(*SmtpContext)
 }
 
@@ -45,7 +46,7 @@ func New(domain string, ip string) *Smtpd {
 func (this *Smtpd) Task(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	ctx := InitSmtpContext(conn)
-	ctx.CloneFrom(this)
+	ctx.CloneFrom(&this.ServerConfig)
 	ctx.Hola()
 
 	for scanner.Scan() {
@@ -72,6 +73,9 @@ func (this *Smtpd) Task(conn net.Conn) {
 	}
 }
 
+func (this *Smtpd) Listen(port string) {
+	this.TcpServer.Listen(port, this)
+}
 
 
 func commandHash(this *Smtpd, ctx *SmtpContext) error {
@@ -99,7 +103,7 @@ func dataHead(ctx *SmtpContext) {
 		ctx.Email.Head[len(ctx.Email.Head)-1].Value += "\r\n" + ctx.Msg
 	} else {
 		attr := strings.Split(ctx.Msg, ": ")
-		ele := &KV{
+		ele := &maild.KV {
 			Name:  attr[0],
 			Value: attr[1],
 		}
