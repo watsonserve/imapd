@@ -122,5 +122,4 @@ func (this *ImapContext) APPEND(script *Mas) {
 func (this *ImapContext) EXPUNGE(script *Mas) {
     this.Send(fmt.Sprintf("* %d EXPUNGE\r\n", serial))
     this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
-    this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
 }

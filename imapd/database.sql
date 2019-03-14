@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS "mail_boxes" (
 );
 
 CREATE TABLE IF NOT EXISTS "mail" (
+    sn seq
     mail_id    INT,
     valid_code INT,
     box_name   VARCHAR(64) UNIQUE,
