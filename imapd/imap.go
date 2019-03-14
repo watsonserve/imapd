@@ -51,7 +51,7 @@ func (this *ImapContext) EHLO(script *Mas) {
 	this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
 }
 
-func (this *ImapContext) SELECT(script *Mas) {
+func (this *ImapContext) select(script *Mas) {
     this.MailBox = ""
     if 1 != len(script.Parames) {
         this.Send(fmt.Sprintf("%s BAD SELECT FAILURE: arguments invalid.\r\n", script.Tag))
@@ -65,22 +65,27 @@ func (this *ImapContext) SELECT(script *Mas) {
         this.Send(fmt.Sprintf("%s NO SELECT FAILURE: no such mailbox.\r\n", script.Tag))
         return
     }
-    this.MailBox = mailBox
+    this.mailBox = mailBox
     sum, recentCnt, unseen, validCode, nextUID
-    fmt.Sprintf("* %d FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n")
-    fmt.Sprintf("* %d EXISTS\r\n", sum)
-    fmt.Sprintf("* %d RECENT\r\n", recentCnt)
-    fmt.Sprintf("* OK [UNSEEN %d] Message %d is first unseen\r\n", unseen, unseen)
-    fmt.Sprintf("* OK [UIDVALIDITY %d] UIDs valid\r\n", validCode)
-    fmt.Sprintf("* OK [UIDNEXT %d] Predicted next UID\r\n", nextUID)
+
+    // read write flag
+    this.rw = 1
+    rw := "READ-ONLY"
+    if "SELECT" == script.Command {
+        this.rw = 3
+        rw := "READ-WRITE"
+    }
+    // response text
+    resp := fmt.Sprintf("* %d FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n")
+    resp += fmt.Sprintf("* %d EXISTS\r\n", sum)
+    resp += fmt.Sprintf("* %d RECENT\r\n", recentCnt)
+    resp += fmt.Sprintf("* OK [UNSEEN %d] Message %d is first unseen\r\n", unseen, unseen)
+    resp += fmt.Sprintf("* OK [UIDVALIDITY %d] UIDs valid\r\n", validCode)
+    resp += fmt.Sprintf("* OK [UIDNEXT %d] Predicted next UID\r\n", nextUID)
 
     // A list of message flags that the client can change permanently.  If this is missing, the client should assume that all flags can be changed permanently.
-    fmt.Sprintf("* OK [PERMANENTFLAGS (\\Deleted \\Seen \\*)] Limited\r\n")
-    this.Send(fmt.Sprintf("%s OK [READ-WRITE] SELECT completed.\r\n", script.Tag))
-}
-
-func (this *ImapContext) EXAMINE(script *Mas) {
-    this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
+    resp += fmt.Sprintf("* OK [PERMANENTFLAGS (\\Deleted \\Seen \\*)] Limited\r\n")
+    this.Send(resp + fmt.Sprintf("%s OK [%s] %s completed.\r\n", script.Tag, rw, script.Command))
 }
 
 func (this *ImapContext) CREATE(script *Mas) {

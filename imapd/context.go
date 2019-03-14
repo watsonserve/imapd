@@ -10,13 +10,15 @@ import (
 type ImapContext struct {
     lib.SentStream
     lib.ServerConfig
-    Login bool
+    Login   bool
 
-    db            *sql.DB
-    StmtMap       map[string]*sql.Stmt
+    rw      int
+    mailBox string
+    db      *sql.DB
+    StmtMap map[string]*sql.Stmt
 
-    User string
-    Email *lib.Mail
+    User    string
+    Email   *lib.Mail
 }
 
 

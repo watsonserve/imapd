@@ -88,9 +88,9 @@ func commandHash(this *Imapd, ctx *ImapContext, script *Mas) error {
         case "EHLO":
             ctx.EHLO()
         case "SELECT":
-            ctx.SELECT(script)
+            fallthrough
         case "EXAMINE":
-            ctx.EXAMINE()
+            ctx.select(script)
         case "CREATE":
             ctx.CREATE(script)
         case "DELETE":
