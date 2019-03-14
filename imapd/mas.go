@@ -1,4 +1,4 @@
-package imap
+package imapd
 
 import (
     "strconv"
@@ -7,23 +7,17 @@ import (
 
 // mail access structor
 type Mas struct {
-    Count int
+    Tag string
     Command string
     Parames []string
 }
 
 func initMas(raw []lexical.Lexical_t) *Mas {
     length := len(raw)
-    count, err := strconv.ParseInt(raw[0].Value, 10, 0)
-
     ret := &Mas {
-        Count: 0,
+        Tag: raw[0].Value,
         Command: "",
         Parames: nil,
-    }
-
-    if nil == err {
-        ret.Count = int(count)
     }
     if 1 < length {
         ret.Command = raw[1].Value

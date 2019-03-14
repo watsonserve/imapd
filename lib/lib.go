@@ -1,8 +1,12 @@
-package maild
+package lib
 
 import (
 	"container/list"
 )
+
+type Author interface {
+    Auth(username string, password string) string
+}
 
 type KV struct {
     Name string
@@ -17,6 +21,7 @@ type Mail struct {
 }
 
 type ServerConfig struct {
+    Author  Author
 	Domain  string
 	Ip      string
 	Name    string
@@ -25,6 +30,7 @@ type ServerConfig struct {
 }
 
 func (this *ServerConfig) CloneFrom(ctx *ServerConfig) {
+	this.Author = ctx.Author
 	this.Domain = ctx.Domain
 	this.Ip = ctx.Ip
 	this.Name = ctx.Name

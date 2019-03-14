@@ -44,7 +44,6 @@ if "__main__" == __name__:
     sendStr("3 CAPABILITY\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
-    exit(0)
 
     sendStr("4 SELECT INBOX\r\n")
     buf = sockfd.recv(BUFSIZ)

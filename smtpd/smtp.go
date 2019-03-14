@@ -1,8 +1,7 @@
-package smtp
+package smtpd
 
 import (
-	"github.com/watsonserve/maild"
-	"github.com/watsonserve/maild/auth"
+	"github.com/watsonserve/maild/lib"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -48,7 +47,7 @@ func AUTH(ctx *SmtpContext) {
 			content[i] = '\n'
 		}
 	}
-	author := auth.New()
+	author := ctx.Author
 	userPassword := strings.Split(string(content), "\n")
 	userId := author.Auth(userPassword[0], userPassword[1])
 	buf := "535 Authentication Failed\r\n"
@@ -123,7 +122,7 @@ func RCPT(ctx *SmtpContext) {
 func DATA(ctx *SmtpContext) {
 	format := "from %s ([%s]) by %s over TLS secured channel with %s(%s)\r\n\t%d"
 	ctx.Module = MOD_HEAD
-	ele := &maild.KV {
+	ele := &lib.KV {
 		Name:  "Received",
 		Value: fmt.Sprintf(format, ctx.Domain, ctx.Ip, ctx.Domain, ctx.Name, ctx.Version, time.Now().Unix()),
 	}

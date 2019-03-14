@@ -5,8 +5,18 @@ import (
     "io"
     "log"
     "fmt"
-    "github.com/watsonserve/maild/smtpd/smtp"
+    "github.com/watsonserve/maild/lib"
+    "github.com/watsonserve/maild/smtpd"
 )
+
+type Author struct {
+    lib.Author
+}
+
+func (this *Author) Auth(username string, password string) string {
+    fmt.Printf("%s %s\n", username, password)
+    return "null"
+}
 
 func main() {
     //*/
@@ -21,7 +31,8 @@ func main() {
     log.SetOutput(io.Writer(fp))
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
-    smtpServer := smtp.New("watsonserve.com", "127.0.0.1")
+    smtpServer := smtpd.New("watsonserve.com", "127.0.0.1")
+    smtpServer.Author = &Author{}
 
     fmt.Println("listen on port 10025")
     smtpServer.Listen(":10025")

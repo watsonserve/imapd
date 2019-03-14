@@ -1,10 +1,9 @@
-package smtp
+package smtpd
 
 import (
     "fmt"
     "net"
-    "github.com/watsonserve/maild"
-    "github.com/watsonserve/maild/server"
+    "github.com/watsonserve/maild/lib"
     "regexp"
     "time"
 )
@@ -16,23 +15,24 @@ const (
 )
 
 type SmtpContext struct {
-    server.SentStream
-    maild.ServerConfig
+    lib.SentStream
+    lib.ServerConfig
     Module int
     Login  bool
 	re     *regexp.Regexp
     Msg    string
     User   string
-    Email  maild.Mail
+    Email  *lib.Mail
 }
 
 func InitSmtpContext(sock net.Conn) *SmtpContext {
     ret := &SmtpContext{}
 
-    ret.SentStream = *server.InitSentStream(sock)
+    ret.SentStream = *lib.InitSentStream(sock)
     ret.Module = MOD_COMMAND
     ret.Login = false
-	ret.re = regexp.MustCompile("<(.+)>")
+    ret.re = regexp.MustCompile("<(.+)>")
+    ret.Email = &lib.Mail{}
     return ret
 }
 

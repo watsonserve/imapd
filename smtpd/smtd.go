@@ -1,9 +1,8 @@
-package smtp
+package smtpd
 
 import (
 	"fmt"
-    "github.com/watsonserve/maild"
-	"github.com/watsonserve/maild/server"
+    "github.com/watsonserve/maild/lib"
 	"net"
 	"bufio"
 	"os"
@@ -12,8 +11,8 @@ import (
 )
 
 type Smtpd struct {
-	server.TcpServer
-	maild.ServerConfig
+	lib.TcpServer
+	lib.ServerConfig
 	dict    map[string]func(*SmtpContext)
 }
 
@@ -103,7 +102,7 @@ func dataHead(ctx *SmtpContext) {
 		ctx.Email.Head[len(ctx.Email.Head)-1].Value += "\r\n" + ctx.Msg
 	} else {
 		attr := strings.Split(ctx.Msg, ": ")
-		ele := &maild.KV {
+		ele := &lib.KV {
 			Name:  attr[0],
 			Value: attr[1],
 		}
