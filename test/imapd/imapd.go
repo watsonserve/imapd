@@ -1,6 +1,7 @@
 package main
 
 import (
+    "database/sql"
     "os"
     "io"
     "log"
@@ -48,10 +49,11 @@ func main() {
     log.SetOutput(io.Writer(fp))
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
-    db := ConnPg()
-    imapServer := imapd.New("imap.watsonserve.com", "127.0.0.1")
+    // db := ConnPg()
+    // dbc := Imapd.NewDAL(db)
+    imapServer := imapd.New(nil, "imap.watsonserve.com", "127.0.0.1")
     imapServer.Author = &Author{}
 
-    fmt.Println("listen on port 10143")
-    imapServer.Listen(":10143")
+    fmt.Println("listen on port 993")
+    imapServer.TLSListen(":993", "etc/imap.crt", "etc/imap.key")
 }
