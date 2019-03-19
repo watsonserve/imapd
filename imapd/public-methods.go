@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-func (this *ImapContext) NOOP(script *Mas) {
+func (this *ImapContext) NOOP(tag string) {
 	// check state
-	this.Send(fmt.Sprintf("%s OK NOOP completed.\r\n", script.Tag))
+	this.Send(fmt.Sprintf("%s OK NOOP completed.\r\n", tag))
 }
 
 func (this *ImapContext) RSET(script *Mas) {

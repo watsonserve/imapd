@@ -10,11 +10,16 @@ CREATE TYPE gender_t AS ENUM (
 
 
 CREATE TABLE IF NOT EXISTS "mail_boxes" (
-    uidvalidity SERIAL      PRIMARY KEY,
-    box_name    VARCHAR(64),
-    user_id     UUID,
-    recent      BIGINT,
-    next_uid    INT
+    uidvalidity  SERIAL      PRIMARY KEY,
+    box_name     VARCHAR(64),
+    user_id      UUID,
+    recent       BIGINT,
+    next_uid     INT,
+    has_children BOOLEAN,
+    selectable   BOOLEAN,
+    noinferiors  BOOLEAN,
+    marked       BOOLEAN,
+    sys_defined  BOOLEAN,
 );
 
 CREATE TABLE IF NOT EXISTS "mails" (

@@ -51,19 +51,19 @@ if "__main__" == __name__:
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    sendStr("4 ID (\"name\" \"py mail\" \"version\" \"0.0.1\")\r\n")
+    # sendStr("4 ID (\"name\" \"py mail\" \"version\" \"0.0.1\")\r\n")
+    # buf = sockfd.recv(BUFSIZ)
+    # printB(buf)
+
+    sendStr("5 SELECT Notes\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    # sendStr("5 SELECT Notes\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
+    sendStr("6 LIST \"\" \"\"\r\n")
+    buf = sockfd.recv(BUFSIZ)
+    printB(buf)
 
-    # sendStr("6 LIST \"\" \"\"\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
-
-    sendStr("6 LIST \"INBOX\" \"*\"\r\n")
+    sendStr("7 LIST \"\" \"Notes/*\"\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 

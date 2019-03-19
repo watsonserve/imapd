@@ -92,6 +92,8 @@ func commandHash(this *Imapd, ctx *ImapContext, script *Mas) error {
             ctx.LOGIN(this, script)
         case "LOGOUT":
             ctx.LOGOUT(script.Tag)
+        case "NOOP":
+            ctx.NOOP(script.Tag)
         case "SELECT":
             fallthrough
         case "EXAMINE":

@@ -132,39 +132,62 @@ func (this *ImapContext) UNSUBSCRIBE(script *Mas) {
     this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
 }
 
+// ref: {
+//   "/":     不可以,
+//   "":      查找mailbox,
+//   "通配符": 不可以,
+//   "name":  查找
+// }
+
+// ["", "name"] === ["name", "*"]
+
+// mailbox: {
+//   "/":     不可以,
+//   "":      返回 "/" "",
+//   "通配符": ref只能是邮箱名或"",
+//   "name":  ref只能是""
+// }
 func (this *ImapContext) LIST(script *Mas) {
-    parames := lexical.Parse(script.Parames) // [ref, mailbox]
+    // [ref: {"", "name"}, mailbox: {"", "通配符", "name"}]
+    parames := lexical.Parse(script.Parames)
     if 2 != len(parames) {
         this.Send(fmt.Sprintf("%s NO LIST FAILURE: arguments invalid.\r\n", script.Tag))
         return
     }
-    // 只要"" == mailbox就返回"/" ""
-    if "\"\"" == parames[1].Value {
-        this.Send(fmt.Sprintf("* LIST (\\Noselect \\HasChildren) \"/\" \"\"\r\n", script.Tag, script.Command))
-        return
-    }
-
+    // 获取字符串值
     paths := []string{"", ""}
-    
     for i := 0; i < 2; i++ {
         val := parames[i].Value
         if '"' == val[0] {
-            val = val[1:-1]
+            val = val[1 : len(val) - 1]
         }
         paths[i] = val
     }
-    // ["", "/"]  ["", "%"]  ["", "*"]  ["", "name"]
-    path := strings.Join(paths, "/")
-    if '/' == path[-1] {
-        this.Send(fmt.Sprintf("* LIST (\\Noselect \\HasChildren) \"/\" \"\"\r\n", script.Tag, script.Command))
-    }
+    path := paths[1]
+    resp := ""
+    if "" == path {
+        resp += "* LIST (\\Noselect \\HasChildren) \"/\" \"\"\r\n"
+    } else {
+        if "" != paths[0] {
+            path = strings.Join(paths, "/")
+        }
 
-    this.Send(fmt.Sprintf("* LIST ().\r\n", script.Tag, script.Command))
-    this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
+        mailboxes, err := this.dal.List(path)
+        if nil != err {
+            // TODO log
+        } else {
+            mailboxList := *mailboxes
+            for i := 0; i < len(mailboxList); i++ {
+                mailbox := mailboxList[i]
+                resp += fmt.Sprintf("* LIST (%s) \"/\" \"%s\"\r\n", strings.Join(mailbox.Attributes, " "), mailbox.Name)
+            }
+        }
+    }
+    this.Send(fmt.Sprintf("%s%s OK LIST completed.\r\n", resp, script.Tag))
 }
 
 func (this *ImapContext) LSUB(script *Mas) {
-    this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
+    this.Send(fmt.Sprintf("%s OK LSUB completed.\r\n", script.Tag))
 }
 
 func (this *ImapContext) STATUS(script *Mas) {
