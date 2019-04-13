@@ -98,9 +98,10 @@ func (this *ImapContext) Select(that *Imapd, script *Mas) {
     resp := fmt.Sprintf("* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n")
     resp += fmt.Sprintf("* %d EXISTS\r\n", sum)
     resp += fmt.Sprintf("* %d RECENT\r\n", recentCnt)
-    resp += fmt.Sprintf("* OK [UNSEEN %d] Message %d is first unseen\r\n", unseen, unseen)
     resp += fmt.Sprintf("* OK [UIDVALIDITY %d] UIDs valid\r\n", validCode)
     resp += fmt.Sprintf("* OK [UIDNEXT %d] Predicted next UID\r\n", nextUID)
+    // options 当当前邮箱中有被标记为未读的邮件时，则给出该行，该数字为第sn条消息，并非UID
+    resp += fmt.Sprintf("* OK [UNSEEN %d] is the first unseen message\r\n", unseen)
 
     // A list of message flags that the client can change permanently.  If this is missing, the client should assume that all flags can be changed permanently.
     resp += fmt.Sprintf("* OK [PERMANENTFLAGS (\\Deleted \\Seen \\*)] Limited\r\n")

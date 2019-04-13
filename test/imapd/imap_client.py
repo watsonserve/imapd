@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import socket
 import ssl
 import pprint
@@ -43,44 +45,32 @@ if "__main__" == __name__:
     sendStr("2 LOGIN james@watsonserve.com 123456\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
-    # sendStr("*\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
+    if '2 NO LOGIN failed.' == buf[0:18]:
+        exit(0)
 
     sendStr("3 CAPABILITY\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    # sendStr("4 ID (\"name\" \"py mail\" \"version\" \"0.0.1\")\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
-
-    sendStr("5 SELECT Notes\r\n")
+    sendStr("4 SELECT Inbox\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    sendStr("6 LIST \"\" \"\"\r\n")
+    sendStr("5 LIST \"\" \"Inbox/*\"\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    sendStr("7 LIST \"\" \"Notes/*\"\r\n")
+    # 检索有多少邮件，并查看当前邮箱中所有邮件的UID
+    # UID SEARCH 中 数字表示当前邮箱中的第offset个消息：第offset个消息，例如2:4为第2条消息到第4条消息共3个
+    sendStr("6 UID SEARCH 2:4 NOT DELETED\r\n")
+    # sendStr("6 UID SEARCH 1:* NOT DELETED\r\n")
     buf = sockfd.recv(BUFSIZ)
     printB(buf)
 
-    # sendStr("7 LIST \"*\" \"\"\r\n")
+    # sendStr("7 UID FETCH 12365:12372 (INTERNALDATE UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (date subject from content-type to cc bcc message-id in-reply-to references)])\r\n")
     # buf = sockfd.recv(BUFSIZ)
     # printB(buf)
 
-    # sendStr("4 SELECT DELETED\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
-
-    # sendStr("5 UID SEARCH 143:* NOT DELETED\r\n")
-    # buf = sockfd.recv(BUFSIZ)
-    # printB(buf)
-    #sendStr("6 UID FETCH 126:127 (INTERNALDATE UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (date subject from content-type to cc bcc message-id in-reply-to references)])\r\n")
-    #buf = sockfd.recv(BUFSIZ)
-    #printB(buf)
     # sendStr("6 NOOP\r\n")
     # buf = sockfd.recv(BUFSIZ)
     # printB(buf)
