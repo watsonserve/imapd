@@ -49,7 +49,7 @@ func main() {
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
     db := ConnPg()
-    imapServer := imapd.New("imap.watsonserve.com", "127.0.0.1")
+    imapServer := imapd.New(db, "imap.watsonserve.com", "127.0.0.1")
     imapServer.Author = &Author{}
 
     fmt.Println("listen on port 10143")
