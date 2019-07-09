@@ -1,42 +1,57 @@
 package imapd
 
 import (
-    "database/sql"
+    "errors"
     "fmt"
     "net"
+    "os"
     "github.com/watsonserve/maild/lib"
 )
 
 type ImapContext struct {
+    lib.ReadStream
     lib.SentStream
     lib.ServerConfig
-    Login   bool
-
     rw      int
-    mailBox string
-    db      *sql.DB
-    StmtMap map[string]*sql.Stmt
-
     User    string
+    State   int
+    mailBox string
+    dal     *DataAccessLayer
     Email   *lib.Mail
 }
 
+func InitImapContext(dbc *DataAccessLayer, sock net.Conn) *ImapContext {
+    ret := &ImapContext{
+        rw: 0,
+        User: "",
+        State: 0,
+        mailBox: "",
+        dal: dbc,
+        Email: &lib.Mail{},
+    }
 
-func InitImapContext(sock net.Conn) *ImapContext {
-    ret := &ImapContext{Login: false}
-
+    ret.ReadStream = *lib.InitReadStream(sock)
     ret.SentStream = *lib.InitSentStream(sock)
-    ret.Email = &lib.Mail{}
-    ret.db = db
-    ret.StmtMap = make(map[string]*sql.Stmt)
-    ret.Prepare("select", "select box_id where name=? and user_id=?")
     return ret
 }
 
-func (this *ImapContext) Prepare(index string, query string) {
-    stmt ,err := this.db.Prepare(query)
+func (this *ImapContext) Next(imapd *Imapd) error {
+    msg, err := this.ReadLine()
     if nil != err {
-        panic(err)
+        return err
     }
-    this.StmtMap[index] = stmt
+    if "" == msg {
+        return errors.New("EOF")
+    }
+    script := initMas(msg)
+    if nil == script {
+        this.Send(fmt.Sprintf("%s BAD Command Error.\r\n", msg))
+        return nil
+    }
+
+    err = commandHash(imapd, this, script)
+    if nil != err {
+        fmt.Fprintln(os.Stderr, err)
+    }
+    return nil
 }

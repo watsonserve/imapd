@@ -1,6 +1,8 @@
 package lib
 
 import (
+    "bufio"
+    "crypto/tls"
     "fmt"
     "net"
     "log"
@@ -22,11 +24,24 @@ func InitTCPServer() *TcpServer {
  * 这里使用的是每个链接启动一个新的go程的模型
  * 高并发的话，性能取决于go语言的协程能力
  */
-func (this *TcpServer) Listen(port string, that Dispatcher) int {
-    // port = ":465"
-    ln, err := net.Listen("tcp", port)
+func (this *TcpServer) TLSListen(port string, crt string, key string, that Dispatcher) error {
+    cert, err := tls.LoadX509KeyPair(crt, key)
     if err != nil {
-        return -1
+        return err
+    }
+    ln, err := tls.Listen("tcp", port, &tls.Config {
+        Certificates: []tls.Certificate{cert},
+        CipherSuites: []uint16 {
+          tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+          tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+          tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+          tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+          tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+        },
+        PreferServerCipherSuites: true,
+    })
+    if err != nil {
+        return err
     }
     defer ln.Close()
     for {
@@ -37,6 +52,48 @@ func (this *TcpServer) Listen(port string, that Dispatcher) int {
         defer conn.Close()
         go that.Task(conn)
     }
+}
+
+/*
+ * 这里使用的是每个链接启动一个新的go程的模型
+ * 高并发的话，性能取决于go语言的协程能力
+ */
+func (this *TcpServer) Listen(port string, that Dispatcher) error {
+    ln, err := net.Listen("tcp", port)
+    if err != nil {
+        return err
+    }
+    defer ln.Close()
+    for {
+        conn, err := ln.Accept()
+        if err != nil {
+            log.Println("a connect exception")
+        }
+        defer conn.Close()
+        go that.Task(conn)
+    }
+}
+
+
+type ReadStream struct {
+    scanner *bufio.Scanner
+}
+
+func InitReadStream(sock net.Conn) *ReadStream {
+    return &ReadStream {
+        scanner: bufio.NewScanner(sock),
+    }
+}
+
+func (this *ReadStream) ReadLine() (string, error) {
+    this.scanner.Scan()
+    err := this.scanner.Err()
+    if nil != err {
+        return "", err
+    }
+    msg := this.scanner.Text()
+    fmt.Printf("c: %s\n", msg)
+    return msg, nil
 }
 
 
@@ -54,7 +111,7 @@ func InitSentStream(sock net.Conn) *SentStream {
 
 // 发送
 func (this *SentStream) Send(content string) {
-    //fmt.Print(content)
+    fmt.Printf("s: %s\n", content)
     fmt.Fprint(this.Sock, content)
 }
 

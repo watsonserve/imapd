@@ -1,33 +1,29 @@
 package imapd
 
 import (
-    "strconv"
-    "github.com/watsonserve/maild/compile/lexical"
+    "strings"
 )
 
 // mail access structor
 type Mas struct {
     Tag string
     Command string
-    Parames []string
+    Parames string
 }
 
-func initMas(raw []lexical.Lexical_t) *Mas {
+func initMas(msg string) *Mas {
+    raw := strings.SplitN(msg, " ", 3)
     length := len(raw)
-    ret := &Mas {
-        Tag: raw[0].Value,
-        Command: "",
-        Parames: nil,
+    if length < 2 {
+        return nil
     }
-    if 1 < length {
-        ret.Command = raw[1].Value
-
-        if 2 < length {
-            length -= 2
-            for i:= 2; i < length; i++ {
-                ret.Parames = append(ret.Parames, raw[i].Value)
-            }
-        }
+    ret := &Mas {
+        Tag: raw[0],
+        Command: raw[1],
+        Parames: "",
+    }
+    if 2 < length {
+        ret.Parames = raw[2]
     }
 
     return ret
