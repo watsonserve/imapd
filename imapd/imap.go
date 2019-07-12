@@ -55,8 +55,18 @@ func (this *ImapContext) CLOSE(script *Mas) {
     this.Send(fmt.Sprintf("%s OK CLOSE completed.\r\n", script.Tag))
 }
 
+/**
+ * 创建目录
+ * 与select命令的当前选中目录无关
+ * @example: CREATE foo/bar/tar（bar不存在）则创建/foo/bar和/foo/bar/tar
+ */
 func (this *ImapContext) CREATE(script *Mas) {
-    this.Send(fmt.Sprintf("%s OK %s completed.\r\n", script.Tag, script.Command))
+    err := this.dal.Create(script.Parames)
+    if nil != err {
+        this.Send(fmt.Sprintf("%s NO %s.\r\n", script.Tag, err.Error()))
+        return
+    }
+    this.Send(fmt.Sprintf("%s OK CREATE completed.\r\n", script.Tag))
 }
 
 func (this *ImapContext) DELETE(script *Mas) {
@@ -77,12 +87,10 @@ func (this *ImapContext) UNSUBSCRIBE(script *Mas) {
 
 // ref: {
 //   "/":     不可以,
-//   "":      查找mailbox,
 //   "通配符": 不可以,
+//   "":      查找mailbox,
 //   "name":  查找
 // }
-
-// ["", "name"] === ["name", "*"]
 
 // mailbox: {
 //   "/":     不可以,
@@ -90,6 +98,12 @@ func (this *ImapContext) UNSUBSCRIBE(script *Mas) {
 //   "通配符": ref只能是邮箱名或"",
 //   "name":  ref只能是""
 // }
+
+// ["foo",  ""] => [/, ""]
+// ["",     ""] => [/, ""]
+// ["",  "foo"] => /foo
+// ["",    "*"] => [/foo, /bar, /tar, ...]
+// ["foo", "*"] => [/foo, /foo/bar, /foo/bar/tar, /foo/...]
 func (this *ImapContext) LIST(script *Mas) {
     // [ref: {"", "name"}, mailbox: {"", "通配符", "name"}]
     parames := lexical.Parse(script.Parames)
@@ -107,24 +121,32 @@ func (this *ImapContext) LIST(script *Mas) {
         paths[i] = val
     }
     path := paths[1]
-    resp := ""
-    if "" == path {
-        resp += "* LIST (\\Noselect \\HasChildren) \"/\" \"\"\r\n"
-    } else {
-        if "" != paths[0] {
-            path = strings.Join(paths, "/")
-        }
 
+    resp := ""
+    for {
+        // 缺失要查询的路径
+        if "" == path {
+            resp += "* LIST (\\Noselect \\HasChildren) \"/\" \"\"\r\n"
+            break
+        }
+        if "" != paths[0] && "*" != path {
+            break
+        }
+        // 整理为绝对路径
+        path = strings.Join(paths, "/")
+        // 查询数据
         mailboxes, err := this.dal.List(path)
         if nil != err {
             // TODO log
-        } else {
-            mailboxList := *mailboxes
-            for i := 0; i < len(mailboxList); i++ {
-                mailbox := mailboxList[i]
-                resp += fmt.Sprintf("* LIST (%s) \"/\" \"%s\"\r\n", strings.Join(mailbox.Attributes, " "), mailbox.Name)
-            }
+            break
         }
+        // 整理目录列表
+        mailboxList := *mailboxes
+        for i := 0; i < len(mailboxList); i++ {
+            mailbox := mailboxList[i]
+            resp += fmt.Sprintf("* LIST (%s) \"/\" \"%s\"\r\n", strings.Join(mailbox.Attributes, " "), mailbox.Name)
+        }
+        break
     }
     this.Send(fmt.Sprintf("%s%s OK LIST completed.\r\n", resp, script.Tag))
 }
