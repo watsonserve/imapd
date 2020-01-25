@@ -4,6 +4,7 @@ import (
     "bufio"
     "crypto/tls"
     "fmt"
+    "io"
     "net"
     "log"
 )
@@ -79,7 +80,7 @@ type ReadStream struct {
     scanner *bufio.Scanner
 }
 
-func InitReadStream(sock net.Conn) *ReadStream {
+func InitReadStream(sock io.Reader) *ReadStream {
     return &ReadStream {
         scanner: bufio.NewScanner(sock),
     }
