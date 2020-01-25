@@ -12,11 +12,11 @@ import (
 
 type Smtpd struct {
 	maild.TcpServer
-	config maild.ServerConfigure
+	config maild.SmtpServerConfigure
 	dict   map[string]func(*SmtpContext)
 }
 
-func New(config maild.ServerConfigure) *Smtpd {
+func New(config maild.SmtpServerConfigure) *Smtpd {
 	if nil == config {
 		return nil
 	}

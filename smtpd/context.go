@@ -16,7 +16,7 @@ const (
 
 type SmtpContext struct {
     maild.SentStream
-    handlers maild.ServerConfigure
+    handlers maild.SmtpServerConfigure
     conf     *maild.ServerConfig
     Module   int
     Login    bool
@@ -27,7 +27,7 @@ type SmtpContext struct {
     User     string
 }
 
-func InitSmtpContext(sock net.Conn, config maild.ServerConfigure) *SmtpContext {
+func InitSmtpContext(sock net.Conn, config maild.SmtpServerConfigure) *SmtpContext {
     this := &SmtpContext{
         handlers: config,
         conf: config.GetConfig(),

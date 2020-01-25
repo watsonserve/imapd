@@ -25,7 +25,13 @@ type ServerConfig struct {
 	Version string
 }
 
-type ServerConfigure interface {
+type ImapAgentConfigure interface {
+	GetConfig() *ServerConfig
+	Auth(username string, password string) string
+	Trans(email *Mail)
+}
+
+type SmtpServerConfigure interface {
 	GetConfig() *ServerConfig
 	Auth(username string, password string) string
 	TakeOff(email *Mail)
