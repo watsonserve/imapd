@@ -1,13 +1,9 @@
-package lib
+package maild
 
 import (
 	"container/list"
 	"strings"
 )
-
-type Author interface {
-    Auth(username string, password string) string
-}
 
 type KV struct {
     Name string
@@ -22,7 +18,6 @@ type Mail struct {
 }
 
 type ServerConfig struct {
-    Author  Author
 	Domain  string
 	Ip      string
 	Name    string
@@ -30,13 +25,10 @@ type ServerConfig struct {
 	Version string
 }
 
-func (this *ServerConfig) CloneFrom(ctx *ServerConfig) {
-	this.Author = ctx.Author
-	this.Domain = ctx.Domain
-	this.Ip = ctx.Ip
-	this.Name = ctx.Name
-	this.Type = ctx.Type
-	this.Version = ctx.Version
+type ServerConfigure interface {
+	GetConfig() *ServerConfig
+	Auth(username string, password string) string
+	TakeOff(email *Mail)
 }
 
 func Split(raw []byte, sp byte) []string {

@@ -1,7 +1,7 @@
 package smtpd
 
 import (
-	"github.com/watsonserve/maild/lib"
+	"github.com/watsonserve/maild"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -15,7 +15,7 @@ func HELO(ctx *SmtpContext) {
 	addr := ctx.Address
 	name := ctx.Msg[5:]
 
-	ctx.Send(fmt.Sprintf("250 %s Hello %s (%s[%s])\r\n", ctx.Domain, name, addr, addr))
+	ctx.Send(fmt.Sprintf("250 %s Hello %s (%s[%s])\r\n", ctx.conf.Domain, name, addr, addr))
 }
 
 // ehlo命令
@@ -25,7 +25,7 @@ func EHLO(ctx *SmtpContext) {
 	name := ctx.Msg[5:]
 	msg := fmt.Sprintf(
 		"250-%s Hello %s (%s[%s])\r\n%s\r\n%s\r\n%s\r\n%s\r\n",
-		ctx.Domain, name, addr, addr,
+		ctx.conf.Domain, name, addr, addr,
 		"250-AUTH LOGIN PLAIN",
 		"250-AUTH=LOGIN PLAIN",
 		"250-PIPELINING",
@@ -47,9 +47,9 @@ func AUTH(ctx *SmtpContext) {
 			content[i] = '\n'
 		}
 	}
-	author := ctx.Author
+	Auth := ctx.handlers.Auth
 	userPassword := strings.Split(string(content), "\n")
-	userId := author.Auth(userPassword[0], userPassword[1])
+	userId := Auth(userPassword[0], userPassword[1])
 	buf := "535 Authentication Failed\r\n"
 	if "" != userId {
 		ctx.User = userPassword[0]
@@ -62,7 +62,7 @@ func AUTH(ctx *SmtpContext) {
 
 //
 func QUIT(ctx *SmtpContext) {
-	ctx.End("221 2.0.0 " + ctx.Domain + " Service closing transmission channel\r\n")
+	ctx.End("221 2.0.0 " + ctx.conf.Domain + " Service closing transmission channel\r\n")
 }
 
 //
@@ -99,7 +99,7 @@ func RSET(ctx *SmtpContext) {
 func MAIL(ctx *SmtpContext) {
 	ctx.Email.Sender = ctx.re.FindStringSubmatch(ctx.Msg)[1]
 	clientDomain := strings.Split(ctx.Email.Sender, "@")[1]
-	if (clientDomain == ctx.Domain) != (!ctx.Login) { // 本域已登录 or 外域未登录
+	if (clientDomain == ctx.conf.Domain) != (!ctx.Login) { // 本域已登录 or 外域未登录
 		ctx.Send("250 2.1.0 Sender <" + ctx.Email.Sender + "> OK\r\n")
 		return
 	}
@@ -109,7 +109,7 @@ func MAIL(ctx *SmtpContext) {
 //
 func RCPT(ctx *SmtpContext) {
 	recver := ctx.re.FindStringSubmatch(ctx.Msg)[1]
-	if strings.Split(recver, "@")[1] != ctx.Domain && !ctx.Login { // 非登录用户 to 外域
+	if strings.Split(recver, "@")[1] != ctx.conf.Domain && !ctx.Login { // 非登录用户 to 外域
 		ctx.Send("530 5.7.1 Authentication Required\r\n")
 		return
 	}
@@ -122,9 +122,10 @@ func RCPT(ctx *SmtpContext) {
 func DATA(ctx *SmtpContext) {
 	format := "from %s ([%s]) by %s over TLS secured channel with %s(%s)\r\n\t%d"
 	ctx.Module = MOD_HEAD
-	ele := &lib.KV {
+	config := ctx.conf
+	ele := &maild.KV {
 		Name:  "Received",
-		Value: fmt.Sprintf(format, ctx.Domain, ctx.Ip, ctx.Domain, ctx.Name, ctx.Version, time.Now().Unix()),
+		Value: fmt.Sprintf(format, config.Domain, config.Ip, config.Domain, config.Name, config.Version, time.Now().Unix()),
 	}
 	ctx.Email.Head = append(ctx.Email.Head, *ele)
 

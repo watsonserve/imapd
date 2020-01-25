@@ -2,7 +2,7 @@ package smtpd
 
 import (
 	"fmt"
-    "github.com/watsonserve/maild/lib"
+    "github.com/watsonserve/maild"
 	"net"
 	"bufio"
 	"os"
@@ -11,41 +11,37 @@ import (
 )
 
 type Smtpd struct {
-	lib.TcpServer
-	lib.ServerConfig
-	dict    map[string]func(*SmtpContext)
+	maild.TcpServer
+	config maild.ServerConfigure
+	dict   map[string]func(*SmtpContext)
 }
 
-func New(domain string, ip string) *Smtpd {
-	ret := &Smtpd{}
-
-	ret.Domain = domain
-	ret.Ip = ip
-	ret.Type = "SMTP"
-	ret.Name = "WS_SMTPD"
-	ret.Version = "1.0"
-
-	ret.dict = map[string]func(*SmtpContext) {
-		"HELO": HELO,
-		"EHLO": EHLO,
-		"AUTH": AUTH,
-		"QUIT": QUIT,
-		"XCLIENT": XCLIENT,
-		"STARTTLS": STARTTLS,
-		"HELP": HELP,
-		"NOOP": NOOP,
-		"RSET": RSET,
-		"MAIL": MAIL,
-		"RCPT": RCPT,
-		"DATA": DATA,
+func New(config maild.ServerConfigure) *Smtpd {
+	if nil == config {
+		return nil
 	}
-	return ret
+	return &Smtpd {
+		config: config,
+		dict: map[string]func(*SmtpContext) {
+			"HELO": HELO,
+			"EHLO": EHLO,
+			"AUTH": AUTH,
+			"QUIT": QUIT,
+			"XCLIENT": XCLIENT,
+			"STARTTLS": STARTTLS,
+			"HELP": HELP,
+			"NOOP": NOOP,
+			"RSET": RSET,
+			"MAIL": MAIL,
+			"RCPT": RCPT,
+			"DATA": DATA,
+		},
+	}
 }
 
 func (this *Smtpd) Task(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
-	ctx := InitSmtpContext(conn)
-	ctx.CloneFrom(&this.ServerConfig)
+	ctx := InitSmtpContext(conn, this.config)
 	ctx.Hola()
 
 	for scanner.Scan() {
@@ -102,7 +98,7 @@ func dataHead(ctx *SmtpContext) {
 		ctx.Email.Head[len(ctx.Email.Head)-1].Value += "\r\n" + ctx.Msg
 	} else {
 		attr := strings.Split(ctx.Msg, ": ")
-		ele := &lib.KV {
+		ele := &maild.KV {
 			Name:  attr[0],
 			Value: attr[1],
 		}

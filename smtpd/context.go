@@ -3,7 +3,7 @@ package smtpd
 import (
     "fmt"
     "net"
-    "github.com/watsonserve/maild/lib"
+    "github.com/watsonserve/maild"
     "regexp"
     "time"
 )
@@ -15,35 +15,41 @@ const (
 )
 
 type SmtpContext struct {
-    lib.SentStream
-    lib.ServerConfig
-    Module int
-    Login  bool
-	re     *regexp.Regexp
-    Msg    string
-    User   string
-    Email  *lib.Mail
+    maild.SentStream
+    handlers maild.ServerConfigure
+    conf     *maild.ServerConfig
+    Module   int
+    Login    bool
+	re       *regexp.Regexp
+    Email    *maild.Mail
+    // 其他
+    Msg      string
+    User     string
 }
 
-func InitSmtpContext(sock net.Conn) *SmtpContext {
-    ret := &SmtpContext{}
+func InitSmtpContext(sock net.Conn, config maild.ServerConfigure) *SmtpContext {
+    this := &SmtpContext{
+        handlers: config,
+        conf: config.GetConfig(),
+        Module: MOD_COMMAND,
+        Login: false,
+        re: regexp.MustCompile("<(.+)>"),
+        Email: &maild.Mail{},
+    }
 
-    ret.SentStream = *lib.InitSentStream(sock)
-    ret.Module = MOD_COMMAND
-    ret.Login = false
-    ret.re = regexp.MustCompile("<(.+)>")
-    ret.Email = &lib.Mail{}
-    return ret
+    this.SentStream = *maild.InitSentStream(sock)
+
+    return this
 }
 
 // 问候语
 func (this *SmtpContext) Hola() {
+    config := this.conf
 	this.Send(fmt.Sprintf("220 %s %s Server (%s %s Server %s) ready %d\r\n",
-		this.Domain, this.Type, this.Name, this.Type, this.Version, time.Now().Unix(),
+        config.Domain, config.Type, config.Name, config.Type, config.Version, time.Now().Unix(),
 	))
 }
 
 func (this *SmtpContext) TakeOff() {
-    fmt.Println(this.Email.Head)
-    fmt.Println(this.Email.MailContent)
+    this.handlers.TakeOff(this.Email)
 }

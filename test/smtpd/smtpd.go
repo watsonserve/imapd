@@ -5,17 +5,30 @@ import (
     "io"
     "log"
     "fmt"
-    "github.com/watsonserve/maild/lib"
+    "github.com/watsonserve/maild"
     "github.com/watsonserve/maild/smtpd"
 )
 
-type Author struct {
-    lib.Author
+type SmtpConf struct {}
+
+func (this *SmtpConf) GetConfig() *maild.ServerConfig {
+    return &maild.ServerConfig{
+        Domain: "watsonserve.com",
+        Ip: "127.0.0.1",
+        Type: "SMTP",
+        Name: "WS_SMTPD",
+        Version: "1.0",
+    }
 }
 
-func (this *Author) Auth(username string, password string) string {
+func (this *SmtpConf) Auth(username string, password string) string {
     fmt.Printf("%s %s\n", username, password)
     return "null"
+}
+
+func (this *SmtpConf) TakeOff(email *maild.Mail) {
+    fmt.Println(email.Head)
+    fmt.Println(email.MailContent)
 }
 
 func main() {
@@ -31,8 +44,7 @@ func main() {
     log.SetOutput(io.Writer(fp))
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
-    smtpServer := smtpd.New("watsonserve.com", "127.0.0.1")
-    smtpServer.Author = &Author{}
+    smtpServer := smtpd.New(&SmtpConf {})
 
     fmt.Println("listen on port 10025")
     smtpServer.Listen(":10025")
