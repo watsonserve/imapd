@@ -16,6 +16,7 @@ const (
 
 type SmtpContext struct {
     maild.SentStream
+    Address string
     handlers maild.SmtpServerConfigure
     conf     *maild.ServerConfig
     Module   int
@@ -29,6 +30,7 @@ type SmtpContext struct {
 
 func InitSmtpContext(sock net.Conn, config maild.SmtpServerConfigure) *SmtpContext {
     this := &SmtpContext{
+        Address: sock.RemoteAddr().String(),
         handlers: config,
         conf: config.GetConfig(),
         Module: MOD_COMMAND,

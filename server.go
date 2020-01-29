@@ -21,13 +21,26 @@ func InitTCPServer() *TcpServer {
     return &TcpServer{}
 }
 
+func (this *TcpServer) listen(ln net.Listener, that Dispatcher) error {
+    defer ln.Close()
+    for {
+        conn, err := ln.Accept()
+        if nil != err {
+            log.Println("a connect exception")
+        }
+        defer conn.Close()
+        go that.Task(conn)
+    }
+    return nil
+}
+
 /*
  * 这里使用的是每个链接启动一个新的go程的模型
  * 高并发的话，性能取决于go语言的协程能力
  */
 func (this *TcpServer) TLSListen(port string, crt string, key string, that Dispatcher) error {
     cert, err := tls.LoadX509KeyPair(crt, key)
-    if err != nil {
+    if nil != err {
         return err
     }
     ln, err := tls.Listen("tcp", port, &tls.Config {
@@ -41,18 +54,10 @@ func (this *TcpServer) TLSListen(port string, crt string, key string, that Dispa
         },
         PreferServerCipherSuites: true,
     })
-    if err != nil {
+    if nil != err {
         return err
     }
-    defer ln.Close()
-    for {
-        conn, err := ln.Accept()
-        if err != nil {
-            log.Println("a connect exception")
-        }
-        defer conn.Close()
-        go that.Task(conn)
-    }
+    return this.listen(ln, that)
 }
 
 /*
@@ -61,18 +66,10 @@ func (this *TcpServer) TLSListen(port string, crt string, key string, that Dispa
  */
 func (this *TcpServer) Listen(port string, that Dispatcher) error {
     ln, err := net.Listen("tcp", port)
-    if err != nil {
+    if nil != err {
         return err
     }
-    defer ln.Close()
-    for {
-        conn, err := ln.Accept()
-        if err != nil {
-            log.Println("a connect exception")
-        }
-        defer conn.Close()
-        go that.Task(conn)
-    }
+    return this.listen(ln, that)
 }
 
 
@@ -99,15 +96,13 @@ func (this *ReadStream) ReadLine() (string, error) {
 
 
 type SentStream struct {
-    Address string
-    Sock net.Conn
+    Sock io.WriteCloser
 }
 
-func InitSentStream(sock net.Conn) *SentStream {
-    ret := &SentStream {}
-    ret.Address = sock.RemoteAddr().String()
-    ret.Sock = sock
-    return ret
+func InitSentStream(sock io.WriteCloser) *SentStream {
+    return &SentStream {
+        Sock: sock,
+    }
 }
 
 // 发送
