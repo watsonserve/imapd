@@ -27,6 +27,7 @@ func (this *TcpServer) listen(ln net.Listener, that Dispatcher) error {
         conn, err := ln.Accept()
         if nil != err {
             log.Println("a connect exception")
+            continue
         }
         defer conn.Close()
         go that.Task(conn)
