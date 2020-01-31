@@ -8,7 +8,7 @@ import (
     "github.com/watsonserve/goutils"
 )
 
-type ImapAgentContext struct {
+type imap_agent_context_t struct {
     goutils.Stream
     Sess string
 }
@@ -36,18 +36,18 @@ func split(raw []byte, sp byte) []string {
 	return ret
 }
 
-func InitImapAgentContext(sock net.Conn) *ImapAgentContext {
-    return &ImapAgentContext {
+func initImapAgentContext(sock net.Conn) *imap_agent_context_t {
+    return &imap_agent_context_t {
         Stream: *goutils.InitStream(sock),
         Sess: "",
     }
 }
 
-func (this *ImapAgentContext) Checked() bool {
+func (this *imap_agent_context_t) Checked() bool {
     return "" == this.Sess
 }
 
-func (this *ImapAgentContext) AUTHENTICATE(script *Mas) []string {
+func (this *imap_agent_context_t) AUTHENTICATE(script *Mas) []string {
     if "PLAIN" != script.Parames {
 	    this.Send(fmt.Sprintf("%s NO AUTHENTICATE FAILURE.\r\n", script.Tag))
         return nil
@@ -70,20 +70,20 @@ func (this *ImapAgentContext) AUTHENTICATE(script *Mas) []string {
     return split(decodeContent, '\x00')
 }
 
-func (this *ImapAgentContext) LOGOUT(tag string) {
+func (this *imap_agent_context_t) LOGOUT(tag string) {
     this.Sess = ""
 	this.End(fmt.Sprintf("* BYE IMAP4rev1 Server logging out\r\n%s OK LOGOUT completed.\r\n", tag))
 }
 
-func (this *ImapAgentContext) NOOP(tag string) {
+func (this *imap_agent_context_t) NOOP(tag string) {
 	this.Send(fmt.Sprintf("%s OK NOOP completed.\r\n", tag))
 }
 
-func (this *ImapAgentContext) RSET(script *Mas) {
+func (this *imap_agent_context_t) RSET(script *Mas) {
 	this.Send(fmt.Sprintf("%s OK RSET completed.\r\n", script.Tag))
 }
 
-func (this *ImapAgentContext) CAPABILITY(tag string) {
+func (this *imap_agent_context_t) CAPABILITY(tag string) {
     abilities := "IMAP4rev1 LOGINDISABLED"
 
     if "" == this.Sess {

@@ -34,7 +34,7 @@ type ImapAgent struct {
     re            *regexp.Regexp
     outPermission map[string]bool // 不需要登录态
     Uppop         map[string]bool // 需要上游服务器处理
-    sessMap       map[string]*ImapAgentContext
+    sessMap       map[string]*imap_agent_context_t
 }
 
 func initMas(msg string) *Mas {
@@ -113,12 +113,12 @@ func (this *ImapAgent) Listen(ln net.Listener) {
             continue
         }
         defer conn.Close()
-        go this.Task(conn)
+        go this.task(conn)
     }
 }
 
-func (this *ImapAgent) Task(conn net.Conn) {
-    ctx := InitImapAgentContext(conn)
+func (this *ImapAgent) task(conn net.Conn) {
+    ctx := initImapAgentContext(conn)
     fmt.Println("hello client")
     ctx.Send("* OK " + this.name + " IMAP4 service is ready.\r\n")
 
@@ -146,7 +146,7 @@ func (this *ImapAgent) Task(conn net.Conn) {
     }
 }
 
-func (this *ImapAgent) commandHash(ctx *ImapAgentContext, script *Mas) error {
+func (this *ImapAgent) commandHash(ctx *imap_agent_context_t, script *Mas) error {
     // 鉴权
     signIn := ctx.Checked()
     need := this.needPermission(script.Command)
@@ -186,7 +186,7 @@ func (this *ImapAgent) needPermission(command string) bool {
     return !exist
 }
 
-func (this *ImapAgent) signIn(ctx *ImapAgentContext, tag string, parames []string) {
+func (this *ImapAgent) signIn(ctx *imap_agent_context_t, tag string, parames []string) {
     for 2 == len(parames) {
         sessionId := this.iface.Auth(parames[0], parames[1])
         if "" == sessionId {
