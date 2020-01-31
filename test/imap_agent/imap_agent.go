@@ -4,7 +4,8 @@ import (
     "os"
     "io"
     "log"
-    "github.com/watsonserve/maild/imap_agent"
+    "github.com/watsonserve/goutils"
+    "github.com/watsonserve/imapd/imap_agent"
     "fmt"
 )
 
@@ -32,7 +33,11 @@ func main() {
     log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
 
     imapServer := imap_agent.New("WS_IMAPD", &AgentConfig{})
-
     fmt.Println("listen on port 993")
-    imapServer.TLSListen(":993", "etc/imap.crt", "etc/imap.key")
+    ln, err := goutils.TLSListen(":993", "etc/imap.crt", "etc/imap.key")
+    if nil != err {
+        log.Println(err)
+        return
+    }
+    imapServer.Listen(ln)
 }

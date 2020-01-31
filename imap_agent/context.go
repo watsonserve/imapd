@@ -4,13 +4,12 @@ import (
     "encoding/base64"
     "fmt"
     "net"
-    "github.com/watsonserve/maild"
     "strings"
+    "github.com/watsonserve/goutils"
 )
 
 type ImapAgentContext struct {
-    maild.ReadStream
-    maild.SentStream
+    goutils.Stream
     Sess string
 }
 
@@ -39,8 +38,7 @@ func split(raw []byte, sp byte) []string {
 
 func InitImapAgentContext(sock net.Conn) *ImapAgentContext {
     return &ImapAgentContext {
-        ReadStream: *maild.InitReadStream(sock),
-        SentStream: *maild.InitSentStream(sock),
+        Stream: *goutils.InitStream(sock),
         Sess: "",
     }
 }

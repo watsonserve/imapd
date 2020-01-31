@@ -3,8 +3,8 @@ package imap_agent
 import (
     "errors"
     "fmt"
-    "github.com/watsonserve/maild"
     "net"
+    "log"
     "os"
     "regexp"
     "strings"
@@ -29,7 +29,6 @@ type ImapAgentFace interface {
 }
 
 type ImapAgent struct {
-	maild.TcpServer
     iface         ImapAgentFace
     name          string
     re            *regexp.Regexp
@@ -105,19 +104,16 @@ func (this *ImapAgent) upHandle() {
     }
 }
 
-func (this *ImapAgent) Listen(port string) {
+func (this *ImapAgent) Listen(ln net.Listener) {
     go this.upHandle()
-    err := this.TcpServer.Listen(port, this)
-    if nil != err {
-        fmt.Fprintln(os.Stderr, err)
-    }
-}
-
-func (this *ImapAgent) TLSListen(port string, crt string, key string) {
-    go this.upHandle()
-    err := this.TcpServer.TLSListen(port, crt, key, this)
-    if nil != err {
-        fmt.Fprintln(os.Stderr, err)
+    for {
+        conn, err := ln.Accept()
+        if nil != err {
+            log.Println("a connect exception", err)
+            continue
+        }
+        defer conn.Close()
+        go this.Task(conn)
     }
 }
 
