@@ -14,26 +14,26 @@ type imap_agent_context_t struct {
 }
 
 func split(raw []byte, sp byte) []string {
-	var ret []string
-	length := len(raw)
-	dest := make([]byte, length)
-	for i := 0; i < length; i++ {
-		ch := raw[i]
-		if 0 == ch {
-			ch = '\n'
-		}
-		dest[i] = ch
-	}
-	list := strings.Split(string(dest), "\n")
-	length = len(list)
+    var ret []string
+    length := len(raw)
+    dest := make([]byte, length)
+    for i := 0; i < length; i++ {
+        ch := raw[i]
+        if 0 == ch {
+            ch = '\n'
+        }
+        dest[i] = ch
+    }
+    list := strings.Split(string(dest), "\n")
+    length = len(list)
 
-	for i := 0; i < length; i++ {
-		if "" == list[i] {
-			continue
-		}
-		ret = append(ret, list[i])
-	}
-	return ret
+    for i := 0; i < length; i++ {
+        if "" == list[i] {
+            continue
+        }
+        ret = append(ret, list[i])
+    }
+    return ret
 }
 
 func initImapAgentContext(sock net.Conn) *imap_agent_context_t {
@@ -49,7 +49,7 @@ func (this *imap_agent_context_t) Checked() bool {
 
 func (this *imap_agent_context_t) AUTHENTICATE(script *Mas) []string {
     if "PLAIN" != script.Parames {
-	    this.Send(fmt.Sprintf("%s NO AUTHENTICATE FAILURE.\r\n", script.Tag))
+        this.Send(fmt.Sprintf("%s NO AUTHENTICATE FAILURE.\r\n", script.Tag))
         return nil
     }
     this.Send(fmt.Sprintf("+\r\n"))
@@ -72,15 +72,15 @@ func (this *imap_agent_context_t) AUTHENTICATE(script *Mas) []string {
 
 func (this *imap_agent_context_t) LOGOUT(tag string) {
     this.Sess = ""
-	this.End(fmt.Sprintf("* BYE IMAP4rev1 Server logging out\r\n%s OK LOGOUT completed.\r\n", tag))
+    this.End(fmt.Sprintf("* BYE IMAP4rev1 Server logging out\r\n%s OK LOGOUT completed.\r\n", tag))
 }
 
 func (this *imap_agent_context_t) NOOP(tag string) {
-	this.Send(fmt.Sprintf("%s OK NOOP completed.\r\n", tag))
+    this.Send(fmt.Sprintf("%s OK NOOP completed.\r\n", tag))
 }
 
 func (this *imap_agent_context_t) RSET(script *Mas) {
-	this.Send(fmt.Sprintf("%s OK RSET completed.\r\n", script.Tag))
+    this.Send(fmt.Sprintf("%s OK RSET completed.\r\n", script.Tag))
 }
 
 func (this *imap_agent_context_t) CAPABILITY(tag string) {

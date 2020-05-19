@@ -1,3 +1,4 @@
+// IMAP agent service
 package imap_agent
 
 import (
@@ -28,7 +29,7 @@ type ImapAgentFace interface {
     Send(sess string, spt *Mas)
 }
 
-type ImapAgent struct {
+type imap_agent_t struct {
     iface         ImapAgentFace
     name          string
     re            *regexp.Regexp
@@ -55,43 +56,9 @@ func initMas(msg string) *Mas {
     return ret
 }
 
-func New(name string, iface ImapAgentFace) *ImapAgent {
-    return &ImapAgent {
-        iface: iface,
-        name: name,
-        re: regexp.MustCompile("<(.+)>"),
-        outPermission: map[string]bool {
-            "AUTHENTICATE": true,
-            "LOGIN": true,
-            "LOGOUT": true,
-            "CAPABILITY": true,
-            "HELP": true,
-            "NOOP": true,
-            "QUIT": true,
-            "RSET": true,
-            "STARTTLS": true,
-            "XCLIENT": true,
-        },
-        Uppop: map[string]bool {
-            "SELECT": true,
-            "EXAMINE": true,
-            "CLOSE": true,
-            "CREATE": true,
-            "DELETE": true,
-            "RENAME": true,
-            "SUBSCRIBE": true,
-            "UNSUBSCRIBE": true,
-            "LIST": true,
-            "LSUB": true,
-            "STATUS": true,
-            "APPEND": true,
-            "ID": true,
-        },
-    }
-}
-
-func (this *ImapAgent) upHandle() {
+func (this *imap_agent_t) upHandle() {
     for {
+        // 从服务端读取数据
         data := this.iface.Read()
         if nil == data {
             continue
@@ -104,20 +71,7 @@ func (this *ImapAgent) upHandle() {
     }
 }
 
-func (this *ImapAgent) Listen(ln net.Listener) {
-    go this.upHandle()
-    for {
-        conn, err := ln.Accept()
-        if nil != err {
-            log.Println("a connect exception", err)
-            continue
-        }
-        defer conn.Close()
-        go this.task(conn)
-    }
-}
-
-func (this *ImapAgent) task(conn net.Conn) {
+func (this *imap_agent_t) task(conn net.Conn) {
     ctx := initImapAgentContext(conn)
     fmt.Println("hello client")
     ctx.Send("* OK " + this.name + " IMAP4 service is ready.\r\n")
@@ -146,7 +100,7 @@ func (this *ImapAgent) task(conn net.Conn) {
     }
 }
 
-func (this *ImapAgent) commandHash(ctx *imap_agent_context_t, script *Mas) error {
+func (this *imap_agent_t) commandHash(ctx *imap_agent_context_t, script *Mas) error {
     // 鉴权
     signIn := ctx.Checked()
     need := this.needPermission(script.Command)
@@ -181,12 +135,12 @@ func (this *ImapAgent) commandHash(ctx *imap_agent_context_t, script *Mas) error
     return nil
 }
 
-func (this *ImapAgent) needPermission(command string) bool {
+func (this *imap_agent_t) needPermission(command string) bool {
     _, exist := this.outPermission[command]
     return !exist
 }
 
-func (this *ImapAgent) signIn(ctx *imap_agent_context_t, tag string, parames []string) {
+func (this *imap_agent_t) signIn(ctx *imap_agent_context_t, tag string, parames []string) {
     for 2 == len(parames) {
         sessionId := this.iface.Auth(parames[0], parames[1])
         if "" == sessionId {
@@ -198,4 +152,51 @@ func (this *ImapAgent) signIn(ctx *imap_agent_context_t, tag string, parames []s
         return
     }
     ctx.Send(fmt.Sprintf("%s NO LOGIN FAILURE: username or password rejected.\r\n", tag))
+}
+
+func Service(name string, ln net.Listener, iface ImapAgentFace) {
+    self := &imap_agent_t {
+        iface: iface,
+        name: name,
+        re: regexp.MustCompile("<(.+)>"),
+        outPermission: map[string]bool {
+            "AUTHENTICATE": true,
+            "LOGIN": true,
+            "LOGOUT": true,
+            "CAPABILITY": true,
+            "HELP": true,
+            "NOOP": true,
+            "QUIT": true,
+            "RSET": true,
+            "STARTTLS": true,
+            "XCLIENT": true,
+        },
+        Uppop: map[string]bool {
+            "SELECT": true,
+            "EXAMINE": true,
+            "CLOSE": true,
+            "CREATE": true,
+            "DELETE": true,
+            "RENAME": true,
+            "SUBSCRIBE": true,
+            "UNSUBSCRIBE": true,
+            "LIST": true,
+            "LSUB": true,
+            "STATUS": true,
+            "APPEND": true,
+            "ID": true,
+            "UID": true,
+        },
+    }
+
+    go self.upHandle()
+    for {
+        conn, err := ln.Accept()
+        if nil != err {
+            log.Println("a connect exception", err)
+            continue
+        }
+        defer conn.Close()
+        go self.task(conn)
+    }
 }
