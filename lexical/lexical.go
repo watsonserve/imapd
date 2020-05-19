@@ -1,3 +1,4 @@
+// 词法分析
 package lexical
 
 /*
@@ -39,10 +40,7 @@ func getType(ch byte) int {
     return 0
 }
 
-/**
- * @ 词法分析
- * @return 成功 0，失败 -1
- */
+// 解析入口
 func Parse(str string) []Lexical_t {
     var val Lexical_t
     dest := make([]Lexical_t, 0)
