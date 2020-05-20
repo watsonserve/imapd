@@ -120,6 +120,8 @@ func commandHash(this *Imapd, ctx *ImapContext, script *Mas) error {
             ctx.APPEND(script)
         case "ID":
             ctx.ID(script)
+        case "SEARCH":
+            ctx.SEARCH(script)
         default:
             ctx.Send(fmt.Sprintf("%s BAD %s is not supported.\r\n", script.Tag, script.Command))
             return errors.New("method " + script.Command + " not valid")
